@@ -1,0 +1,28 @@
+{
+	"name": "parse-wrapper",
+	"version": "1.1.2",
+	"description": "A wrapper for Parse to simplying codes for data retrieving and modifying from Parse.",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+ssh://git@github.com/ymcatar/parse-wrapper.git"
+	},
+	"keywords": [
+		"parse",
+		"wrapper",
+		"database",
+		"baas"
+	],
+	"author": "ymcatar",
+	"license": "GPL-3.0",
+	"bugs": {
+		"url": "https://github.com/ymcatar/parse-wrapper/issues"
+	},
+	"homepage": "https://github.com/ymcatar/parse-wrapper#readme",
+	"dependencies": {
+		"parse": "^1.6.0"
+	}
+}
