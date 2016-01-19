@@ -7,6 +7,7 @@ var ERR_DEL = 'Error deleting object(s).';
 var ERR_SAVE = 'Error saving object.';
 var ERR_COUNT = 'Error counting object.';
 var ERR_UPDATE = 'Error updating object.';
+var ERR_COUNT = 'Error counting object.';
 
 var processData = function(item) {
 	var copy = {};
@@ -16,18 +17,20 @@ var processData = function(item) {
 	return copy;
 };
 
-var getObject = function(query, getOne, callback) {
-	var sendQuery = getOne ? query.first : query.find;
-	sendQuery.call(query, {
-		success: function(data) {
-			if (data)
-				callback(null, data);
-			else
-				callback(ERR_EXIST);
-		},
-		error: function(err) {
-			callback(ERR_GET);
-		}
+var getObject = function(query, getOne) {
+	var sendQuery = getOne? query.first: query.find;
+	return new Promise((resolve, reject) => {
+		sendQuery.call(query, {
+			success: data => {
+				if (data)
+					resolve(data);
+				else
+					reject(ERR_EXIST);
+			},
+			error: err => {
+				reject(ERR_GET);
+			}
+		});
 	});
 };
 
@@ -35,127 +38,143 @@ exports.initialize = function(settings) {
 	Parse.initialize(settings.appKey, settings.jsKey);
 };
 
-exports.getAll = function(classToGet, callback) {
-	var Target = Parse.Object.extend(classToGet);
-	var query = new Parse.Query(Target);
-	getObject(query, false, function(err, data) {
-		if (err) callback(err);
-		else {
-			data = data.map(function(item) {
-				return processData(item);
+exports.getAll = function(classToGet) {
+	return new Promise((resolve, reject) => {
+		var Target = Parse.Object.extend(classToGet);
+		var query = new Parse.Query(Target);
+		getObject(query, false)
+			.then(data => {
+				data = data.map(item => processData(item));
+				resolve(data);
+			})
+			.catch(reject);
+	});
+};
+
+exports.getSome = function(classToGet, conditions) {
+	return new Promise((resolve, reject) => {
+		var Target = Parse.Object.extend(classToGet);
+		var query = new Parse.Query(Target);
+		for (var i in conditions)
+			query.equalTo(i, conditions[i]);
+
+		getObject(query, false)
+			.then(data => {
+				data = data.map(item => processData(item));
+				resolve(data);
+			})
+			.catch(reject);
+	});
+};
+
+exports.getOne = function(classToGet, conditions) {
+	return new Promise((resolve, reject) => {
+		var Target = Parse.Object.extend(classToGet);
+		var query = new Parse.Query(Target);
+		for (var i in conditions)
+			query.equalTo(i, conditions[i]);
+
+		getObject(query, true)
+			.then(data => {
+				data = processData(data);
+				resolve(data);
+			})
+			.catch(reject);
+	});
+};
+
+exports.getOneByID = function(classToGet, id) {
+	return new Promise((resolve, reject) => {
+		var Target = Parse.Object.extend(classToGet);
+		var query = new Parse.Query(Target);
+		query.equalTo('objectId', id);
+
+		getObject(query, true)
+			.then(data => {
+				data = processData(data);
+				resolve(data);
+			})
+			.catch(reject);
+	});
+};
+
+exports.deleteOneByID = function(classToDelete, id) {
+	return new Promise((resolve, reject) => {
+		var Target = Parse.Object.extend(classToDelete);
+		var query = new Parse.Query(Target);
+		query.equalTo('objectId', id);
+
+		getObject(query, true)
+			.then(data => {
+				data.destroy({
+					success: () => {
+						resolve();
+					},
+					error: () => {
+						reject(ERR_DEL);
+					}
+				});
+			})
+			.catch(reject);
+	});
+};
+
+exports.save = function(classToSave, obj) {
+	return new Promise((resolve, reject) => {
+		var Target = Parse.Object.extend(classToSave);
+		var target = new Target();
+
+		target.save(obj, {
+			success: target => {
+				resolve(target.id);
+			},
+			error: (target, err) => {
+				reject(ERR_SAVE);
+			}
+		});
+	});
+};
+
+exports.updateOneByID = function(classToUpdate, id, obj) {
+	return new Promise((resolve, reject) => {
+		var Target = Parse.Object.extend(classToUpdate);
+		var query = new Parse.Query(Target);
+		query.equalTo('objectId', id);
+
+		getObject(query, true)
+			.then(data => {
+				for (var key in obj)
+					data.set(key, obj[key]);
+				data.save({
+					success: data => {
+						resolve();
+					},
+					error: err => {
+						reject(ERR_UPDATE);
+					}
+				});
+			})
+			.catch(err => {
+				reject(ERR_EXIST);
 			});
-			callback(null, data);
-		}
 	});
 };
 
-exports.getSome = function(classToGet, conditions, callback) {
-	var Target = Parse.Object.extend(classToGet);
-	var query = new Parse.Query(Target);
-	for (var i in conditions)
-		query.equalTo(i, conditions[i]);
+exports.countSome = function(classToGet, conditions) {
+	return new Promise((resolve, reject) => {
+		var Target = Parse.Object.extend(classToGet);
+		var query = new Parse.Query(Target);
 
-	getObject(query, false, function(err, data) {
-		if (err) callback(err);
-		else {
-			data = data.map(function(item) {
-				return processData(item);
-			});
-			callback(null, data);
-		}
-	});
-};
+		for (var i in conditions)
+			query.equalTo(i, conditions[i]);
 
-exports.getOne = function(classToGet, conditions, callback) {
-	var Target = Parse.Object.extend(classToGet);
-	var query = new Parse.Query(Target);
-	for (var i in conditions)
-		query.equalTo(i, conditions[i]);
-
-	getObject(query, true, function(err, item) {
-		if (err) callback(err);
-		else
-			callback(null, processData(item));
-	});
-};
-
-exports.getOneByID = function(classToGet, id, callback) {
-	var Target = Parse.Object.extend(classToGet);
-	var query = new Parse.Query(Target);
-	query.equalTo('objectId', id);
-
-	getObject(query, true, function(err, item) {
-		if (err) callback(err);
-		else
-			callback(null, processData(item));
-	});
-};
-
-exports.deleteOneByID = function(classToDelete, id, callback) {
-	var Target = Parse.Object.extend(classToDelete);
-	var query = new Parse.Query(Target);
-	query.equalTo('objectId', id);
-
-	getObject(query, true, function(err, item) {
-		if (err) callback(err);
-		else
-			item.destroy({
-				success: function() {
-					callback(null);
-				},
-				error: function() {
-					callback(ERR_DEL);
-				}
-			});
-	});
-};
-
-exports.updateOneByID = function(classToUpdate, id, obj, callback) {
-	var Target = Parse.Object.extend(classToUpdate);
-	var query = new Parse.Query(Target);
-	query.equalTo('objectId', id);
-
-	getObject(query, true, function(err, item) {
-		if (err) callback(err);
-		else
-			item.save(obj, {
-				success: function() {
-					callback(null);
-				},
-				error: function() {
-					callback(ERR_UPDATE);
-				}
-			});
-	});
-};
-
-exports.save = function(classToSave, obj, callback) {
-	var Target = Parse.Object.extend(classToSave);
-	var target = new Target();
-
-	target.save(obj, {
-		success: function(Target) {
-			callback(null, Target.id);
-		},
-		error: function(Target, err) {
-			callback(ERR_SAVE);
-		}
-	});
-};
-
-exports.countSome = function(classToGet, conditions, callback) {
-	var Target = Parse.Object.extend(classToGet);
-	var query = new Parse.Query(Target);
-
-	for (var i in conditions)
-		query.equalTo(i, conditions[i]);
-
-	query.count({
-		success: function(count) {
-			callback(null, count);
-		},
-		error: function(err) {
-			callback('Parse error.');
-		}
+		query.count({
+			success: count => {
+				resolve(count);
+			},
+			error: err => {
+				reject(ERR_COUNT);
+			}
+		});
 	});
 };
