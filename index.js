@@ -138,25 +138,18 @@ exports.save = function(classToSave, obj) {
 exports.updateOneByID = function(classToUpdate, id, obj) {
 	return new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToUpdate);
-		var query = new Parse.Query(Target);
-		query.equalTo('objectId', id);
+		var temp = new Target();
 
-		getObject(query, true)
-			.then(data => {
-				for (var key in obj)
-					data.set(key, obj[key]);
-				data.save({
-					success: data => {
-						resolve();
-					},
-					error: err => {
-						reject(ERR_UPDATE);
-					}
-				});
-			})
-			.catch(err => {
+		temp.id = id;
+		for (var key in obj)
+			temp.set(key, obj[key]);
+
+		temp.save({
+			success: () => { resolve(); },
+			error: err => {
 				reject(ERR_EXIST);
-			});
+			}
+		});
 	});
 };
 
