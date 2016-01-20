@@ -30,7 +30,7 @@ parse.initialize(keys);
 
 ### Retrieving data
 
-#### .getAll(class, callback)
+#### .getAll(class)
 To get all objects belonging to class ```Test```:
 ```
 parse.getAll('Test')
@@ -38,7 +38,7 @@ parse.getAll('Test')
     .catch(console.error);
 ```
 
-#### .getSome(class, condition, callback)
+#### .getSome(class, condition)
 To get all the objects matching some conditions (e.g. has attribute ```testing``` equal to ```true```) in class ```Test```:
 ```
 parse.getSome('Test', {testing: true})
@@ -47,7 +47,7 @@ parse.getSome('Test', {testing: true})
 ```
 The objects will be returned as an array.
 
-#### .getOne(class, condition, callback)
+#### .getOne(class, condition)
 This is similar to ```.getSome()```, but only the first match will be returned.
 ```
 parse.getOne('Test', {testing: true})
@@ -55,7 +55,7 @@ parse.getOne('Test', {testing: true})
     .catch(console.error);
 ```
 
-#### .getOneByID(class, id, callback)
+#### .getOneByID(class, id)
 To get the object with id of ```1234``` from class ```Test```:
 ```
 parse.getOneByID('Test', '1234')
@@ -65,7 +65,7 @@ parse.getOneByID('Test', '1234')
 
 ### Deleting data
 
-#### .deleteOneByID(class, id, callback)
+#### .deleteOneByID(class, id)
 To delete the object with id of ```1234``` from class ```Test```:
 ```
 parse.deleteOneByID('Test', '1234')
@@ -77,7 +77,7 @@ parse.deleteOneByID('Test', '1234')
 
 ### Updating data
 
-#### .updateOneByID(class, id, newObject, callback)
+#### .updateOneByID(class, id, newObject)
 To replace the object with id of ```1234``` from class ```Test``` with object ```newObject```:
 ```
 parse.updateOneByID('Test', '1234', newObject)
@@ -99,9 +99,18 @@ parse.countSome('Test', {testing: true})
     .catch(console.error);
 ```
 
+#### .countAll(class)
+```
+parse.countAll('Test')
+    .then((count) => {
+        console.log('count:', count);
+    })
+    .catch(console.error);
+```
+
 ### Saving objects
 
-### .save(class, obj. callback)
+### .save(class, obj)
 To save a new object ```obj``` into class `'Test'`:
 ```
 parse.save('Test', obj)
