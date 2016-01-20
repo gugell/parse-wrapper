@@ -1,4 +1,5 @@
 var Parse = require('parse/node');
+var _ = require('lodash');
 
 // Error message
 var ERR_GET = 'Error retrieving data.';
@@ -38,33 +39,70 @@ exports.initialize = function(settings) {
 	Parse.initialize(settings.appKey, settings.jsKey);
 };
 
-exports.getAll = function(classToGet) {
+exports.countSome = function(classToGet, conditions) {
 	return new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToGet);
 		var query = new Parse.Query(Target);
-		getObject(query, false)
-			.then(data => {
-				data = data.map(item => processData(item));
-				resolve(data);
+
+		for (var i in conditions)
+			query.equalTo(i, conditions[i]);
+
+		query.count({
+			success: count => {
+				resolve(count);
+			},
+			error: err => {
+				reject(ERR_COUNT);
+			}
+		});
+	});
+};
+
+exports.countAll = function(classToGet) {
+	return exports.countSome(classToGet, {});
+};
+
+exports.getSome = function(classToGet, conditions) {
+
+	var helperGetAll = function(classToGet, conditions, skip) {
+		return new Promise((resolve, reject) => {
+			var Target = Parse.Object.extend(classToGet);
+			var query = new Parse.Query(Target);
+
+			for (var i in conditions)
+				query.equalTo(i, conditions[i]);
+
+			query.skip(skip);
+			getObject(query, false)
+				.then(data => {
+					data = data.map(item => processData(item));
+					resolve(data);
+				})
+				.catch(reject);
+		});
+	};
+
+	return new Promise((resolve, reject) => {
+		var currentCount = 0;
+		var promises = [], results = [];
+		exports.countAll(classToGet)
+			.then(count => {
+				var p = helperGetAll(classToGet, conditions, currentCount);
+				for (var i = 0; i < count; i += 100)
+					promises.push(helperGetAll(classToGet, conditions, i));
+				Promise.all(promises)
+					.then(results => {
+						results = results.reduce((sum, a) => _.union(sum, a));
+						resolve(results);
+					})
+					.catch(reject);
 			})
 			.catch(reject);
 	});
 };
 
-exports.getSome = function(classToGet, conditions) {
-	return new Promise((resolve, reject) => {
-		var Target = Parse.Object.extend(classToGet);
-		var query = new Parse.Query(Target);
-		for (var i in conditions)
-			query.equalTo(i, conditions[i]);
-
-		getObject(query, false)
-			.then(data => {
-				data = data.map(item => processData(item));
-				resolve(data);
-			})
-			.catch(reject);
-	});
+exports.getAll = function(classToGet) {
+	return exports.getSome(classToGet, {});
 };
 
 exports.getOne = function(classToGet, conditions) {
@@ -153,24 +191,5 @@ exports.updateOneByID = function(classToUpdate, id, obj) {
 				});
 			})
 			.catch(reject);
-	});
-};
-
-exports.countSome = function(classToGet, conditions) {
-	return new Promise((resolve, reject) => {
-		var Target = Parse.Object.extend(classToGet);
-		var query = new Parse.Query(Target);
-
-		for (var i in conditions)
-			query.equalTo(i, conditions[i]);
-
-		query.count({
-			success: count => {
-				resolve(count);
-			},
-			error: err => {
-				reject(ERR_COUNT);
-			}
-		});
 	});
 };
