@@ -4,6 +4,7 @@ var _ = require('lodash');
 // Error message
 var ERR_GET = 'Error retrieving data.';
 var ERR_EXIST = 'Object(s) do(es) not exist.';
+var ERR_EMPTY = 'The class is empty.';
 var ERR_DEL = 'Error deleting object(s).';
 var ERR_SAVE = 'Error saving object.';
 var ERR_COUNT = 'Error counting object.';
@@ -92,6 +93,8 @@ exports.getSome = function(classToGet, conditions) {
 					promises.push(helperGetAll(classToGet, conditions, i));
 				Promise.all(promises)
 					.then(results => {
+						if (results.length === 0)
+							reject(ERR_EMPTY);
 						results = results.reduce((sum, a) => _.union(sum, a));
 						resolve(results);
 					})
