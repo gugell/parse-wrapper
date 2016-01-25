@@ -1,6 +1,6 @@
 {
   "name": "parse-wrapper",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "A wrapper for Parse to simplying codes for data retrieving and modifying from Parse.",
   "main": "index.js",
   "scripts": {
