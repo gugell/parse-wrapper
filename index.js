@@ -34,7 +34,6 @@ exports.login = function(loginInfo) {
 		else {
 			Parse.User.logIn(loginInfo.username, loginInfo.password, {
 				success: function(user, err) {
-					console.log(user);
 					resolve(user.getSessionToken());
 				},
 				error: function(user, err) {
