@@ -199,6 +199,7 @@ exports.updateOneByID = function(classToUpdate, id, obj, token) {
 				for(var key in obj)
 					data.set(key, obj[key]);
 				data.save({
+					sessionToken: token,
 					success: () => { resolve(); },
 					error: err => {
 						reject(err);
