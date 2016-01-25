@@ -198,13 +198,17 @@ exports.updateOneByID = function(classToUpdate, id, obj, token) {
 			.then(data => {
 				for(var key in obj)
 					data.set(key, obj[key]);
-				data.save({
-					sessionToken: token,
-					success: () => { resolve(); },
-					error: err => {
-						reject(err);
-					}
-				});
+				Parse.User.enableUnsafeCurrentUser();
+				Parse.User.become(token)
+					.then(() => {
+						data.save({
+							success: () => { resolve(); },
+							error: (data, err) => {
+								reject(err);
+							}
+						});
+					});
+
 			})
 			.catch(reject);
 	});
