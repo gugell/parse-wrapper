@@ -35,20 +35,25 @@ parse.initialize(keys); // return a promise
 To login:
 ```
 parse.login({username: 'username', password: 'password'})
-    .then(console.log);
+    .then(token => {
+        parse.getAll('Test', token)
+            .then(console.log);
+    });
 ```
+This function returns a promise with the session token.
 
 ### Retrieving data
 
-#### .getAll(class)
+#### .getAll(class, token)
 To get all objects belonging to class ```Test```:
 ```
-parse.getAll('Test')
+parse.getAll('Test', token)
     .then(console.log)
     .catch(console.error);
 ```
+The ```token``` parameter is optional.
 
-#### .getSome(class, condition)
+#### .getSome(class, condition, token)
 To get all the objects matching some conditions (e.g. has attribute ```testing``` equal to ```true```) in class ```Test```:
 ```
 parse.getSome('Test', {testing: true})
@@ -57,28 +62,28 @@ parse.getSome('Test', {testing: true})
 ```
 The objects will be returned as an array.
 
-#### .getOne(class, condition)
+#### .getOne(class, condition, token)
 This is similar to ```.getSome()```, but only the first match will be returned.
 ```
-parse.getOne('Test', {testing: true})
+parse.getOne('Test', {testing: true}, token)
     .then(console.log)
     .catch(console.error);
 ```
 
-#### .getOneByID(class, id)
+#### .getOneByID(class, id, token)
 To get the object with id of ```1234``` from class ```Test```:
 ```
-parse.getOneByID('Test', '1234')
+parse.getOneByID('Test', '1234', token)
     .then(console.log)
     .catch(console.error);
 ```
 
 ### Deleting data
 
-#### .deleteOneByID(class, id)
+#### .deleteOneByID(class, id, token)
 To delete the object with id of ```1234``` from class ```Test```:
 ```
-parse.deleteOneByID('Test', '1234')
+parse.deleteOneByID('Test', '1234', token)
     .then(() => {
         console.log('success!');
     })
@@ -87,10 +92,10 @@ parse.deleteOneByID('Test', '1234')
 
 ### Updating data
 
-#### .updateOneByID(class, id, newObject)
+#### .updateOneByID(class, id, newObject, token)
 To replace the object with id of ```1234``` from class ```Test``` with object ```newObject```:
 ```
-parse.updateOneByID('Test', '1234', newObject)
+parse.updateOneByID('Test', '1234', newObject, token)
     .then(() => {
         console.log('success!');
     })
@@ -99,19 +104,19 @@ parse.updateOneByID('Test', '1234', newObject)
 
 ### Counting Objects
 
-#### .countSome(class, condition, callback)
+#### .countSome(class, condition, token)
 This is similar to ```.getSome()```, but only the number of match(es) found will be returned.
 ```
-parse.countSome('Test', {testing: true})
+parse.countSome('Test', {testing: true}, token)
     .then((count) => {
         console.log('count:', count);
     })
     .catch(console.error);
 ```
 
-#### .countAll(class)
+#### .countAll(class, token)
 ```
-parse.countAll('Test')
+parse.countAll('Test', token)
     .then((count) => {
         console.log('count:', count);
     })
@@ -120,10 +125,10 @@ parse.countAll('Test')
 
 ### Saving objects
 
-### .save(class, obj)
+### .save(class, obj, token)
 To save a new object ```obj``` into class `'Test'`:
 ```
-parse.save('Test', obj)
+parse.save('Test', obj, token)
     .then(() => {
         console.log('successfully deleted!');
     })

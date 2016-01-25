@@ -9,11 +9,11 @@ var processData = function(item) {
 	return copy;
 };
 
-var getObject = function(query, getOne) {
+var getObject = function(query, getOne, token) {
 	var sendQuery = getOne? query.first: query.find;
 	return new Promise((resolve, reject) => {
 		sendQuery.call(query, {
-			sessionToken: currentUser,
+			sessionToken: token,
 			success: data => {
 				if (data)
 					resolve(data);
@@ -27,15 +27,15 @@ var getObject = function(query, getOne) {
 	});
 };
 
-var login = function(loginInfo) {
+exports.login = function(loginInfo) {
 	return new Promise((resolve, reject) => {
 		if (!loginInfo.username || !loginInfo.password)
 			reject('Missing login information');
 		else {
-			currentUser = 'logining';
 			Parse.User.logIn(loginInfo.username, loginInfo.password, {
 				success: function(user, err) {
-					resolve(user);
+					console.log(user);
+					resolve(user.getSessionToken());
 				},
 				error: function(user, err) {
 					console.error(err);
@@ -50,7 +50,7 @@ exports.initialize = function(settings) {
 	Parse.initialize(settings.appKey, settings.jsKey);
 };
 
-exports.countSome = function(classToGet, conditions) {
+exports.countSome = function(classToGet, conditions, token) {
 	return new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToGet);
 		var query = new Parse.Query(Target);
@@ -59,6 +59,7 @@ exports.countSome = function(classToGet, conditions) {
 			query.equalTo(i, conditions[i]);
 
 		query.count({
+			sessionToken: token,
 			success: count => {
 				resolve(count);
 			},
@@ -69,13 +70,13 @@ exports.countSome = function(classToGet, conditions) {
 	});
 };
 
-exports.countAll = function(classToGet) {
-	return exports.countSome(classToGet, {});
+exports.countAll = function(classToGet, token) {
+	return exports.countSome(classToGet, {}, token);
 };
 
-exports.getSome = function(classToGet, conditions) {
+exports.getSome = function(classToGet, conditions, token) {
 
-	var helperGetAll = function(classToGet, conditions, skip) {
+	var helperGetAll = function(classToGet, conditions, skip, token) {
 		return new Promise((resolve, reject) => {
 			var Target = Parse.Object.extend(classToGet);
 			var query = new Parse.Query(Target);
@@ -84,7 +85,7 @@ exports.getSome = function(classToGet, conditions) {
 				query.equalTo(i, conditions[i]);
 
 			query.skip(skip);
-			getObject(query, false)
+			getObject(query, false, token)
 				.then(data => {
 					data = data.map(item => processData(item));
 					resolve(data);
@@ -96,11 +97,11 @@ exports.getSome = function(classToGet, conditions) {
 	return new Promise((resolve, reject) => {
 		var currentCount = 0;
 		var promises = [], results = [];
-		exports.countAll(classToGet)
+		exports.countAll(classToGet, token)
 			.then(count => {
-				var p = helperGetAll(classToGet, conditions, currentCount);
+				var p = helperGetAll(classToGet, conditions, currentCount, token);
 				for (var i = 0; i < count; i += 100)
-					promises.push(helperGetAll(classToGet, conditions, i));
+					promises.push(helperGetAll(classToGet, conditions, i, token));
 				Promise.all(promises)
 					.then(results => {
 						if (results.length === 0)
@@ -114,18 +115,18 @@ exports.getSome = function(classToGet, conditions) {
 	});
 };
 
-exports.getAll = function(classToGet) {
-	return exports.getSome(classToGet, {});
+exports.getAll = function(classToGet, token) {
+	return exports.getSome(classToGet, {}, token);
 };
 
-exports.getOne = function(classToGet, conditions) {
+exports.getOne = function(classToGet, conditions, token) {
 	return new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToGet);
 		var query = new Parse.Query(Target);
 		for (var i in conditions)
 			query.equalTo(i, conditions[i]);
 
-		getObject(query, true)
+		getObject(query, true, token)
 			.then(data => {
 				data = processData(data);
 				resolve(data);
@@ -134,13 +135,13 @@ exports.getOne = function(classToGet, conditions) {
 	});
 };
 
-exports.getOneByID = function(classToGet, id) {
+exports.getOneByID = function(classToGet, id, token) {
 	return new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToGet);
 		var query = new Parse.Query(Target);
 		query.equalTo('objectId', id);
 
-		getObject(query, true)
+		getObject(query, true, token)
 			.then(data => {
 				data = processData(data);
 				resolve(data);
@@ -149,15 +150,16 @@ exports.getOneByID = function(classToGet, id) {
 	});
 };
 
-exports.deleteOneByID = function(classToDelete, id) {
+exports.deleteOneByID = function(classToDelete, id, token) {
 	return new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToDelete);
 		var query = new Parse.Query(Target);
 		query.equalTo('objectId', id);
 
-		getObject(query, true)
+		getObject(query, true, token)
 			.then(data => {
 				data.destroy({
+					sessionToken: token,
 					success: () => {
 						resolve();
 					},
@@ -170,12 +172,13 @@ exports.deleteOneByID = function(classToDelete, id) {
 	});
 };
 
-exports.save = function(classToSave, obj) {
+exports.save = function(classToSave, obj, token) {
 	return new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToSave);
 		var target = new Target();
 
 		target.save(obj, {
+			sessionToken: token,
 			success: target => {
 				resolve(target.id);
 			},
@@ -186,13 +189,13 @@ exports.save = function(classToSave, obj) {
 	});
 };
 
-exports.updateOneByID = function(classToUpdate, id, obj) {
+exports.updateOneByID = function(classToUpdate, id, obj, token) {
 	return new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToUpdate);
 		var query = new Parse.Query(Target);
 		query.equalTo('objectId', id);
 
-		getObject(query, true)
+		getObject(query, true, token)
 			.then(data => {
 				for(var key in obj)
 					data.set(key, obj[key]);
