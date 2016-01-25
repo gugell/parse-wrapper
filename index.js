@@ -162,7 +162,7 @@ exports.deleteOneByID = function(classToDelete, id, token) {
 					success: () => {
 						resolve();
 					},
-					error: () => {
+					error: err => {
 						reject(err);
 					}
 				});
