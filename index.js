@@ -38,16 +38,11 @@ exports.login = function() {
 	return new Promise((resolve, reject) => {
 		if (!loginInfo || Parse.User.current())
 			resolve();
-		if (currentUser) {
-			Parse.User.enableUnsafeCurrentUser();
-			Parse.User.become(currentUser).then(user => {
-				currentUser = user.getSessionToken();
-			});
-		}
 		if (loginInfo.username && loginInfo.password) {
 			Parse.User.logIn(loginInfo.username, loginInfo.password, {
 				success: function(user, err) {
-					currentUser = user.getSessionToken();
+					Parse.User._currentUser = new Parse.User();
+					Parse.User._currentUser._sessionToken = user.getSessionToken();
 					resolve();
 				},
 				error: function(user, err) {
