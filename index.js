@@ -48,7 +48,6 @@ var login = function(loginInfo) {
 
 exports.initialize = function(settings) {
 	Parse.initialize(settings.appKey, settings.jsKey);
-	return login({username: settings.username, password: settings.password});
 };
 
 exports.countSome = function(classToGet, conditions) {
