@@ -27,7 +27,7 @@ var keys = {
     username: 'username',
     password: 'password'
 };
-parse.initialize(keys);
+parse.initialize(keys); // return a promise
 ```
 
 ### Retrieving data
