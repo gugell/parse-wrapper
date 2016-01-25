@@ -1,8 +1,6 @@
 var Parse = require('parse/node');
 var _ = require('lodash');
 
-var currentUser;
-
 var processData = function(item) {
 	var copy = {};
 	for(var key in item.attributes)
@@ -31,22 +29,20 @@ var getObject = function(query, getOne) {
 
 var login = function(loginInfo) {
 	return new Promise((resolve, reject) => {
-		if ((!loginInfo.username || !loginInfo.password)|| currentUser)
-			resolve();
-		if (loginInfo.username && loginInfo.password) {
+		if (!loginInfo.username || !loginInfo.password)
+			reject('Missing login information');
+		else {
 			currentUser = 'logining';
 			Parse.User.logIn(loginInfo.username, loginInfo.password, {
 				success: function(user, err) {
-					currentUser = user.getSessionToken();
-					resolve();
+					resolve(user);
 				},
 				error: function(user, err) {
 					console.error(err);
 					reject(err);
 				}
 			});
-		} else
-			resolve();
+		}
 	});
 };
 

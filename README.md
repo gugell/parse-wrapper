@@ -30,6 +30,14 @@ var keys = {
 parse.initialize(keys); // return a promise
 ```
 
+#### .login(loginInfo)
+
+To login:
+```
+parse.login({username: 'username', password: 'password'})
+    .then(console.log);
+```
+
 ### Retrieving data
 
 #### .getAll(class)
