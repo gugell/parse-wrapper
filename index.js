@@ -14,7 +14,7 @@ var getObject = function(query, getOne, token) {
 	return new Promise((resolve, reject) => {
 		sendQuery.call(query, {
 			sessionToken: token,
-			success: data => {
+			success: (data, err) => {
 				if (data)
 					resolve(data);
 				else
