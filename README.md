@@ -23,7 +23,9 @@ To initialize Parse with your own keys:
 ```
 var keys = {
     appKey: 'fakeAppKey',
-    jsKey: 'faleJSKey'
+    jsKey: 'fakeJSKey',
+    username: 'username',
+    password: 'password'
 };
 parse.initialize(keys);
 ```

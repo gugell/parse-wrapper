@@ -1,15 +1,8 @@
 var Parse = require('parse/node');
 var _ = require('lodash');
 
-// Error message
-var ERR_GET = 'Error retrieving data.';
-var ERR_EXIST = 'Object(s) do(es) not exist.';
-var ERR_EMPTY = 'The class is empty.';
-var ERR_DEL = 'Error deleting object(s).';
-var ERR_SAVE = 'Error saving object.';
-var ERR_COUNT = 'Error counting object.';
-var ERR_UPDATE = 'Error updating object.';
-var ERR_COUNT = 'Error counting object.';
+var currentUser;
+var loginInfo;
 
 var processData = function(item) {
 	var copy = {};
@@ -27,10 +20,10 @@ var getObject = function(query, getOne) {
 				if (data)
 					resolve(data);
 				else
-					reject(ERR_EXIST);
+					reject(err);
 			},
 			error: err => {
-				reject(ERR_GET);
+				reject(err);
 			}
 		});
 	});
@@ -38,10 +31,37 @@ var getObject = function(query, getOne) {
 
 exports.initialize = function(settings) {
 	Parse.initialize(settings.appKey, settings.jsKey);
+	loginInfo = {username: settings.username, password: settings.password};
+};
+
+exports.login = function() {
+	return new Promise((resolve, reject) => {
+		if (!loginInfo || Parse.User.current())
+			resolve();
+		if (currentUser) {
+			Parse.User.enableUnsafeCurrentUser();
+			Parse.User.become(currentUser).then(user => {
+				currentUser = user.getSessionToken();
+			});
+		}
+		if (loginInfo.username && loginInfo.password) {
+			Parse.User.logIn(loginInfo.username, loginInfo.password, {
+				success: function(user, err) {
+					currentUser = user.getSessionToken();
+					resolve();
+				},
+				error: function(user, err) {
+					console.error(err);
+					reject(err);
+				}
+			});
+		} else
+			resolve();
+	});
 };
 
 exports.countSome = function(classToGet, conditions) {
-	return new Promise((resolve, reject) => {
+	return exports.login().then(() => new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToGet);
 		var query = new Parse.Query(Target);
 
@@ -53,10 +73,10 @@ exports.countSome = function(classToGet, conditions) {
 				resolve(count);
 			},
 			error: err => {
-				reject(ERR_COUNT);
+				reject(err);
 			}
 		});
-	});
+	}));
 };
 
 exports.countAll = function(classToGet) {
@@ -83,7 +103,7 @@ exports.getSome = function(classToGet, conditions) {
 		});
 	};
 
-	return new Promise((resolve, reject) => {
+	return exports.login().then(() => new Promise((resolve, reject) => {
 		var currentCount = 0;
 		var promises = [], results = [];
 		exports.countAll(classToGet)
@@ -101,7 +121,7 @@ exports.getSome = function(classToGet, conditions) {
 					.catch(reject);
 			})
 			.catch(reject);
-	});
+	}));
 };
 
 exports.getAll = function(classToGet) {
@@ -109,7 +129,7 @@ exports.getAll = function(classToGet) {
 };
 
 exports.getOne = function(classToGet, conditions) {
-	return new Promise((resolve, reject) => {
+	return exports.login().then(() => new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToGet);
 		var query = new Parse.Query(Target);
 		for (var i in conditions)
@@ -121,11 +141,11 @@ exports.getOne = function(classToGet, conditions) {
 				resolve(data);
 			})
 			.catch(reject);
-	});
+	}));
 };
 
 exports.getOneByID = function(classToGet, id) {
-	return new Promise((resolve, reject) => {
+	return exports.login().then(() => new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToGet);
 		var query = new Parse.Query(Target);
 		query.equalTo('objectId', id);
@@ -136,11 +156,11 @@ exports.getOneByID = function(classToGet, id) {
 				resolve(data);
 			})
 			.catch(reject);
-	});
+	}));
 };
 
 exports.deleteOneByID = function(classToDelete, id) {
-	return new Promise((resolve, reject) => {
+	return exports.login().then(() => new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToDelete);
 		var query = new Parse.Query(Target);
 		query.equalTo('objectId', id);
@@ -152,16 +172,16 @@ exports.deleteOneByID = function(classToDelete, id) {
 						resolve();
 					},
 					error: () => {
-						reject(ERR_DEL);
+						reject(err);
 					}
 				});
 			})
 			.catch(reject);
-	});
+	}));
 };
 
 exports.save = function(classToSave, obj) {
-	return new Promise((resolve, reject) => {
+	return exports.login().then(() => new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToSave);
 		var target = new Target();
 
@@ -170,14 +190,14 @@ exports.save = function(classToSave, obj) {
 				resolve(target.id);
 			},
 			error: (target, err) => {
-				reject(ERR_SAVE);
+				reject(err);
 			}
 		});
-	});
+	}));
 };
 
 exports.updateOneByID = function(classToUpdate, id, obj) {
-	return new Promise((resolve, reject) => {
+	return exports.login().then(() => new Promise((resolve, reject) => {
 		var Target = Parse.Object.extend(classToUpdate);
 		var query = new Parse.Query(Target);
 		query.equalTo('objectId', id);
@@ -189,10 +209,10 @@ exports.updateOneByID = function(classToUpdate, id, obj) {
 				data.save({
 					success: () => { resolve(); },
 					error: err => {
-						reject(ERR_EXIST);
+						reject(err);
 					}
 				});
 			})
 			.catch(reject);
-	});
+	}));
 };
