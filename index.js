@@ -104,7 +104,7 @@ exports.getSome = function(classToGet, conditions, token) {
 				Promise.all(promises)
 					.then(results => {
 						if (results.length === 0)
-							reject(ERR_EMPTY);
+							resolve([]);
 						results = results.reduce((sum, a) => _.union(sum, a));
 						resolve(results);
 					})
