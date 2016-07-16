@@ -47,6 +47,7 @@ exports.login = function(loginInfo) {
 
 exports.initialize = function(settings) {
 	Parse.initialize(settings.appKey, settings.jsKey);
+	Parse.serverURL = settings.serverUrl;
 };
 
 exports.countSome = function(classToGet, conditions, token) {

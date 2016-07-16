@@ -6,6 +6,8 @@ This is a wrapper for Parse to simplifying codes for data retrieving and modifyi
 
 Please be aware that this plugin is only meant to implement a minimal subset of features of Parse, that are sufficient to implement a simple application with Parse backend. Basically, only data retrieving and updating are supported. If you need more features of Parse, please use the [official SDK](https://www.npmjs.com/package/parse) instead.
 
+Parse server is now supported.
+
 ## Syntax
 
 ### Initializing

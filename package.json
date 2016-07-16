@@ -1,6 +1,6 @@
 {
   "name": "parse-wrapper",
-  "version": "2.1.9",
+  "version": "3.0.0",
   "description": "A wrapper for Parse to simplying codes for data retrieving and modifying from Parse.",
   "main": "index.js",
   "scripts": {
@@ -24,6 +24,6 @@
   "homepage": "https://github.com/ymcatar/parse-wrapper#readme",
   "dependencies": {
     "lodash": "^4.0.0",
-    "parse": "^1.6.0"
+    "parse": "^1.9.0"
   }
 }
